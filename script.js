@@ -61,10 +61,10 @@ const inputLoanAmount = document.querySelector('.form__input--loan-amount');
 const inputCloseUsername = document.querySelector('.form__input--user');
 const inputClosePin = document.querySelector('.form__input--pin');
 
-const displayMovements = function (movements, sort = false) {
+const displayMovements = function (acc, sort = true) {
     containerMovements.innerHTML = '';//remove any hardcoded values in .html
 
-    const movs = sort ? movements.slice().sort((a, b) => a - b) : movements;
+    const movs = sort ? acc.movements.slice().sort((a, b) => a - b) : acc.movements;
 
     movs.forEach(function (mov, i) {
         const type = mov > 0 ? 'deposit' : 'withdrawal';
@@ -72,22 +72,42 @@ const displayMovements = function (movements, sort = false) {
         const html = `
         <div class="movements__row">
           <div class="movements__type movements__type--${type}">${i + 1} ${type}</div>
-          <div class="movements__value">${mov}€</div>
+          <div class="movements__value">${mov.toFixed(2)}€</div>
         </div>`;
         containerMovements.insertAdjacentHTML('afterbegin', html);
 
     })
 }
 
+const calcDisplaySummary = function (account) {
+    const incomes = account.movements.filter(mov => mov > 0)
+        .reduce((acc, curr) => acc + curr, 0);
+    labelSumIn.textContent = `${incomes.toFixed(2)}€`
+
+    const out = account.movements.filter(mov => mov < 0)
+        .reduce((acc, cur) => acc + cur, 0);
+    labelSumOut.textContent = `${Math.abs(out).toFixed(2)}€`;
+
+    const interest = account.movements.filter(mov => mov > 0)
+        .map(deposit => deposit * (account.interestRate / 100))
+        .filter((int, i, arr) => {
+            return int >= 1
+        })
+        .reduce((acc, int) => acc + int, 0);
+
+    labelSumInterest.textContent = `${interest.toFixed(2)}€`
+}
+
+
 const updateUI = function (account) {
-    displayMovements(account.movements);
+    displayMovements(account);
     calcBalance(account);
     calcDisplaySummary(account);
 }
 
 const calcBalance = function (account) {
     account.balance = account.movements.reduce((acc, curr) => acc + curr, 0);
-    labelBalance.textContent = `${account.balance} EUR`;
+    labelBalance.textContent = `${account.balance.toFixed(2)} EUR`;
 }
 
 accounts.forEach(acc => calcBalance(acc))
@@ -101,16 +121,32 @@ createUsernames(accounts);
 
 let currentAccount;
 
+// FAKE login
+currentAccount = account1;
+updateUI(currentAccount);
+containerApp.style.opacity = 100;
+
+
+//day/month/years
+
 btnLogin.addEventListener('click', function (e) {
     e.preventDefault();
 
     currentAccount = accounts.find(acc => acc.username === inputLoginUsername.value)
 
-    if (currentAccount?.pin === Number(inputLoginPin.value)) {
+    if (currentAccount?.pin === +(inputLoginPin.value)) {
         console.log('Logged in.');
         labelWelcome.textContent = `Welcome back ${currentAccount.owner.split(' ')[0]}`;
         containerApp.style.opacity = 100;
         updateUI(currentAccount);
+
+        const now = new Date();
+        const day = `${now.getDate()}`.padStart(2,0);
+        const month = `${now.getMonth()+1}`.padStart(2,0);
+        const year = now.getFullYear();
+        const hour = now.getHours();
+        const min = now.getMinutes();
+        labelDate.textContent = `${day}/${month}/${year}, ${hour}:${min}`
 
         //clear input fields
         inputLoginUsername.value = inputLoginPin.value = '';
@@ -124,29 +160,10 @@ btnLogin.addEventListener('click', function (e) {
 
 })
 
-const calcDisplaySummary = function (account) {
-    const incomes = account.movements.filter(mov => mov > 0)
-        .reduce((acc, curr) => acc + curr, 0);
-    labelSumIn.textContent = `${incomes}€`
-
-    const out = account.movements.filter(mov => mov < 0)
-        .reduce((acc, cur) => acc + cur, 0);
-    labelSumOut.textContent = `${Math.abs(out)}€`;
-
-    const interest = account.movements.filter(mov => mov > 0)
-        .map(deposit => deposit * (account.interestRate / 100))
-        .filter((int, i, arr) => {
-            return int >= 1
-        })
-        .reduce((acc, int) => acc + int, 0);
-
-    labelSumInterest.textContent = `${interest}€`
-}
-
 btnTransfer.addEventListener('click', function (event) {
     event.preventDefault();
 
-    const amount = Number(inputTransferAmount.value);
+    const amount = +(inputTransferAmount.value);
     const receiverAcc = accounts.find(acc => acc.username === inputTransferTo.value);
 
     //handle conversion
@@ -167,7 +184,7 @@ btnTransfer.addEventListener('click', function (event) {
 
 btnLoan.addEventListener('click', function (e) {
     e.preventDefault();
-    const amount = Number(inputLoanAmount.value);
+    const amount = Math.floor(inputLoanAmount.value);
 
     if (amount > 0 && currentAccount.movements.some(mov => mov >= amount / 10)) {
         //add movement
@@ -186,7 +203,7 @@ btnClose.addEventListener('click', function (e) {
     console.log('Deleting a user');
 
     if (inputCloseUsername.value === currentAccount.username
-        && Number(inputClosePin.value) === currentAccount.pin) {
+        && +(inputClosePin.value) === currentAccount.pin) {
 
         const index = accounts.findIndex(acc => acc.username === currentAccount.username)
 
@@ -209,6 +226,8 @@ btnSort.addEventListener('click', function (e) {
 })
 
 
+
+
 //Challenge 4.
 /*
 Eating too much or too little.
@@ -216,7 +235,7 @@ Eating an okay amount means the dog's current food portion is within range 10%
 above and 10% below the recommended portion.
 
  */
-
+/*
 const dogs = [
     {weight: 22, curFood: 250, owners: ['Alice', 'Bob']},
     {weight: 8, curFood: 200, owners: ['Matilda']},
@@ -275,3 +294,27 @@ const newDogs = dogs.slice().sort(
     (dog1,dog2) => (dog1.curFood>dog2.curFood) ? 1 : -1
 );
 console.log(newDogs);
+ */
+
+// LECTURES
+
+// console.log(23 ===23.0)
+//
+// console.log(0.1+0.2)
+//
+// console.log(Number('23'))
+// console.log(+'23')
+//
+// //parsing
+//
+// console.log(Number.parseInt('30px'))
+// console.log(Number.parseFloat('2.5rem'))
+//
+// console.log(Number.isNaN(20))
+// console.log(Number.isNaN(+'20x'))
+//
+//
+//
+// console.log(Number.isFinite(20));
+
+
