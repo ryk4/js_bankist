@@ -119,12 +119,36 @@ const createUsernames = function (accs) {
 }
 createUsernames(accounts);
 
-let currentAccount;
+const startLogOutTimer = function (){
+
+    const tick = function (){
+        const min = String(Math.floor(time / 60)).padStart(2,0);
+        const seconds = String(time % 60).padStart(2,0);
+
+        labelTimer.textContent = `${min}:${seconds}`;
+
+        if(time < 1){
+            clearInterval(timer);
+            labelWelcome.textContent= `You've been logged out`;
+            containerApp.style.opacity = 0;
+        }
+        time--;
+    }
+
+    let time = 120;
+
+    tick();
+    const timer = setInterval(tick, 1000);
+    return timer;
+}
+
+
+let currentAccount, timer;
 
 // FAKE login
-currentAccount = account1;
-updateUI(currentAccount);
-containerApp.style.opacity = 100;
+// currentAccount = account1;
+// updateUI(currentAccount);
+// containerApp.style.opacity = 100;
 
 
 //day/month/years
@@ -148,6 +172,10 @@ btnLogin.addEventListener('click', function (e) {
         const min = now.getMinutes();
         labelDate.textContent = `${day}/${month}/${year}, ${hour}:${min}`
 
+
+        if (timer) clearInterval(timer);
+        timer = startLogOutTimer();
+
         //clear input fields
         inputLoginUsername.value = inputLoginPin.value = '';
         inputLoginPin.blur();
@@ -155,8 +183,6 @@ btnLogin.addEventListener('click', function (e) {
     } else {
         console.log('not Logged in.');
     }
-
-    console.log(currentAccount)
 
 })
 
@@ -179,7 +205,10 @@ btnTransfer.addEventListener('click', function (event) {
         console.log('Transfer invalid!')
     }
 
-    inputTransferAmount.value = inputTransferTo.value = '';
+    inputTransferAmount.value = inputTransferTo.value = ''
+
+    clearInterval(timer);
+    timer = startLogOutTimer();
 })
 
 btnLoan.addEventListener('click', function (e) {
@@ -195,6 +224,9 @@ btnLoan.addEventListener('click', function (e) {
     }
 
     inputTransferAmount.value = inputTransferTo.value = '';
+
+    clearInterval(timer);
+    timer = startLogOutTimer();
 
 });
 
@@ -225,7 +257,10 @@ btnSort.addEventListener('click', function (e) {
     sorted = !sorted;
 })
 
-
+// setInterval(function (){
+//     const now = new Date();
+//     console.log(`${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`);
+// },1000);
 
 
 //Challenge 4.
